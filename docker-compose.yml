@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: MINIO_SECRET_KEY
+    volumes:
+      - minio-data:/data
+    networks:
+      - mynetwork
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  api:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      MINIO_ACCESS_KEY: MINIO_ACCESS_KEY
+      MINIO_SECRET_KEY: MINIO_SECRET_KEY
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - rabih-docker-task-2_api-data:/api/api
+    networks:
+      - mynetwork
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  minio-data:
+    driver: local
+  rabih-docker-task-2_api-data:  
+    driver: local
+
+networks:
+  mynetwork:
+    driver: bridge
